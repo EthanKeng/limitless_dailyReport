@@ -568,7 +568,7 @@
 
         .form-textarea {
             width: 100%;
-            min-height: 300px;
+            height: 350px;
             padding: 12px;
             border: 2px solid #ddd;
             border-radius: 6px;
@@ -578,6 +578,8 @@
             resize: vertical;
             transition: border-color 0.2s;
             box-sizing: border-box;
+            overflow-y: scroll;
+            overflow-x: hidden;
         }
 
         .form-textarea:focus {
@@ -1610,39 +1612,8 @@ Transcript follows:`,
             } else {
                 characterCounter.style.color = '#999';
             }
-            
-            // Auto-resize textarea
-            autoResizeTextarea();
         }
 
-        
-        function autoResizeTextarea() {
-            // Save current scroll position
-            const currentScroll = promptContentInput.scrollTop;
-            
-            // Reset height to get accurate scrollHeight
-            promptContentInput.style.height = 'auto';
-            promptContentInput.style.overflowY = 'hidden';
-            
-            // Calculate heights
-            const scrollHeight = promptContentInput.scrollHeight;
-            const maxHeight = window.innerHeight * 0.4; // Max 40% of viewport height
-            const minHeight = 300; // Minimum height
-            
-            if (scrollHeight > maxHeight) {
-                // Content exceeds max height - make textarea scrollable
-                promptContentInput.style.height = maxHeight + 'px';
-                promptContentInput.style.overflowY = 'auto';
-                // Restore scroll position
-                promptContentInput.scrollTop = currentScroll;
-            } else {
-                // Content fits - expand textarea to fit content
-                const newHeight = Math.max(scrollHeight, minHeight);
-                promptContentInput.style.height = newHeight + 'px';
-                promptContentInput.style.overflowY = 'hidden';
-            }
-        }
-        
         function handleModalSubmit(e) {
             e.preventDefault();
             
