@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Analysis with Gemini AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fafafa;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #262730;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .sidebar {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .sidebar h3 {
+            color: #262730;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .api-key-section {
+            margin-bottom: 25px;
+        }
+
+        .api-key-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .api-key-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .api-key-selector {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-bottom: 10px;
+            background-color: white;
+        }
+
+        .api-key-selector:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .api-key-controls {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .api-key-label-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .save-api-key-button, .delete-api-key-button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .save-api-key-button {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .save-api-key-button:hover {
+            background-color: #218838;
+        }
+
+        .save-api-key-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .delete-api-key-button {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .delete-api-key-button:hover {
+            background-color: #c82333;
+        }
+
+        .delete-api-key-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .auto-rotation-section {
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .auto-rotation-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #4CAF50;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .current-api-indicator {
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+            margin-top: 5px;
+            padding: 5px 8px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+            border-left: 3px solid #2196F3;
+        }
+
+        .rotation-status {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .import-export-section {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .import-export-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .export-button, .import-button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .export-button {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        .export-button:hover:not(:disabled) {
+            background-color: #138496;
+        }
+
+        .export-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .import-button {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .import-button:hover:not(:disabled) {
+            background-color: #218838;
+        }
+
+        .import-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .import-export-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .import-export-description {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .model-selection-section {
+            margin-bottom: 25px;
+        }
+
+        .model-selector {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-bottom: 10px;
+            background-color: white;
+        }
+
+        .model-selector:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .model-info {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .model-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .model-capabilities {
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .model-description {
+            color: #555;
+            font-style: italic;
+        }
+
+        .model-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-right: 5px;
+            margin-bottom: 3px;
+        }
+
+        .model-badge.premium {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+
+        .model-badge.fast {
+            background-color: #e8f5e8;
+            color: #4caf50;
+        }
+
+        .model-badge.lite {
+            background-color: #f3e5f5;
+            color: #9c27b0;
+        }
+
+        .status {
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .processing-order, .tips {
+            margin-bottom: 20px;
+        }
+
+        .processing-order ul, .tips ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .processing-order li, .tips li {
+            padding: 5px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .content-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .input-section, .results-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .input-section h2, .results-section h2 {
+            color: #262730;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .transcript-input {
+            width: 100%;
+            min-height: 400px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            font-family: monospace;
+            line-height: 1.5;
+        }
+
+        .transcript-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .process-button {
+            width: 100%;
+            padding: 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+
+        .process-button:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+
+        .process-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: #f0f0f0;
+            border-radius: 3px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #4CAF50;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .status-text {
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .tabs {
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            display: inline-block;
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #4CAF50;
+            border-bottom-color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .tab:hover {
+            color: #4CAF50;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .response-container {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 200px;
+        }
+
+        .response-text {
+            white-space: pre-wrap;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .copy-button {
+            background-color: #008CBA;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .copy-button:hover {
+            background-color: #007B9A;
+        }
+
+        .download-section {
+            border-top: 2px solid #ddd;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .download-button {
+            background-color: #6c757d;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .download-button:hover {
+            background-color: #5a6268;
+        }
+
+        .individual-prompts {
+            margin-top: 30px;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .individual-prompts h3 {
+            margin-bottom: 20px;
+            color: #262730;
+        }
+
+        .prompt-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .prompt-item:last-child {
+            border-bottom: none;
+        }
+
+        .prompt-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .individual-process-button {
+            background-color: #17a2b8;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .individual-process-button:hover:not(:disabled) {
+            background-color: #138496;
+        }
+
+        .individual-process-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px 20px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 300px 1fr;
+            }
+        }
+
+        @media (max-width: 968px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .content-area {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: relative;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Daily Analysis with Gemini AI</h1>
+            <p>Process your daily transcripts through multiple AI prompts for comprehensive analysis</p>
+        </div>
+
+        <div class="main-layout">
+            <div class="sidebar">
+                <div class="model-selection-section">
+                    <h3>🤖 Model Selection</h3>
+                    <select id="modelSelector" class="model-selector">
+                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite</option>
+                    </select>
+                    <div id="modelInfo" class="model-info">
+                        <!-- Model information will be populated here -->
+                    </div>
+                </div>
+
+                <div class="api-key-section">
+                    <h3>⚙️ API Key Management</h3>
+                    
+                    <select id="apiKeySelector" class="api-key-selector">
+                        <option value="">Select saved API key...</option>
+                    </select>
+                    
+                    <input 
+                        type="password" 
+                        id="apiKey" 
+                        class="api-key-input" 
+                        placeholder="Enter new Google AI Studio API key"
+                        autocomplete="off"
+                    >
+                    
+                    <div class="api-key-controls">
+                        <input 
+                            type="text" 
+                            id="apiKeyLabel" 
+                            class="api-key-label-input" 
+                            placeholder="Label (e.g., 'Personal', 'Work')"
+                            maxlength="20"
+                        >
+                        <button id="saveApiKeyButton" class="save-api-key-button" disabled>
+                            💾 Save
+                        </button>
+                        <button id="deleteApiKeyButton" class="delete-api-key-button" disabled>
+                            🗑️ Delete
+                        </button>
+                    </div>
+                    
+                    <div id="apiStatus" class="status" style="display: none;"></div>
+                    
+                    <div class="auto-rotation-section">
+                        <div class="auto-rotation-toggle">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="autoRotateToggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <label for="autoRotateToggle" style="cursor: pointer; font-weight: 500;">
+                                🔄 Auto-rotate API keys
+                            </label>
+                        </div>
+                        <div class="rotation-status">
+                            Distribute requests across multiple API keys to manage usage limits
+                        </div>
+                        <div id="currentApiIndicator" class="current-api-indicator" style="display: none;">
+                            Current: <span id="currentApiLabel"></span>
+                        </div>
+                    </div>
+
+                    <div class="import-export-section">
+                        <div class="import-export-title">💾 Backup & Restore</div>
+                        <div class="import-export-description">
+                            Export your API keys for backup or import from a JSON file
+                        </div>
+                        <div class="import-export-controls">
+                            <button id="exportKeysButton" class="export-button">
+                                📤 Export Keys
+                            </button>
+                            <button id="importKeysButton" class="import-button">
+                                📥 Import Keys
+                            </button>
+                            <input type="file" id="importFileInput" class="file-input" accept=".json" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="processing-order">
+                    <h3>📝 Processing Order:</h3>
+                    <ul id="processingOrder">
+                        <li>1. 📌 Highlights and Reflections</li>
+                        <li>2. 📝 To-Do List</li>
+                        <li>3. 📊 Daily Activity Chart</li>
+                        <li>4. 💡 Personal Improvement Suggestions</li>
+                        <li>5. 📋 Day Summary</li>
+                        <li>6. 📖 Structured Daily Logs</li>
+                        <li>7. 🎓 New Learning Points</li>
+                    </ul>
+                </div>
+
+                <div class="tips">
+                    <h3>💡 Tips:</h3>
+                    <ul>
+                        <li>• Paste your transcript in the text area</li>
+                        <li>• Click 'Process All' to run all prompts</li>
+                        <li>• Or process prompts individually</li>
+                        <li>• Copy responses with the copy button</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <div class="input-section">
+                    <h2>📄 Input Transcript</h2>
+                    <textarea 
+                        id="transcriptInput" 
+                        class="transcript-input" 
+                        placeholder="Enter your daily transcript or conversation logs here..."
+                    ></textarea>
+                    
+                    <button id="processAllButton" class="process-button" disabled>
+                        🚀 Process All Prompts
+                    </button>
+                    
+                    <div id="progressSection" style="display: none;">
+                        <div class="progress-bar">
+                            <div id="progressFill" class="progress-fill"></div>
+                        </div>
+                        <div id="statusText" class="status-text"></div>
+                    </div>
+                </div>
+
+                <div class="results-section">
+                    <h2>📊 Results</h2>
+                    <div id="resultsContainer">
+                        <div class="no-results">
+                            No results yet. Process your transcript to see the analysis.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="individual-prompts">
+            <h3>🎯 Process Individual Prompts</h3>
+            <div id="individualPrompts">
+                <!-- Individual prompt buttons will be populated here -->
+            </div>
+        </div>
+
+        <div class="footer">
+            Made with ❤️ for daily productivity analysis | Powered by Google Gemini AI
+        </div>
+    </div>
+
+    <script>
+        // Configuration and state
+        const GEMINI_API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models/';
+        const ROTATION_STORAGE_KEY = 'gemini_auto_rotate_settings';
+        const MODEL_STORAGE_KEY = 'gemini_selected_model';
+        
+        // Model configurations
+        const MODELS = {
+            'gemini-2.5-pro': {
+                name: 'Gemini 2.5 Pro',
+                capabilities: 'Audio, images, videos, text, and PDF',
+                output: 'Text',
+                description: 'Enhanced thinking and reasoning, multimodal understanding, advanced coding, and more',
+                badges: ['premium', 'multimodal'],
+                recommended: 'Best for complex analysis and reasoning tasks'
+            },
+            'gemini-2.5-flash': {
+                name: 'Gemini 2.5 Flash',
+                capabilities: 'Audio, images, videos, and text',
+                output: 'Text',
+                description: 'Adaptive thinking, cost efficiency',
+                badges: ['fast', 'balanced'],
+                recommended: 'Great balance of speed and capability'
+            },
+            'gemini-2.5-flash-lite': {
+                name: 'Gemini 2.5 Flash-Lite',
+                capabilities: 'Text',
+                output: 'Text',
+                description: 'Lightweight and fast processing',
+                badges: ['lite', 'fast'],
+                recommended: 'Fastest processing for text-only tasks'
+            }
+        };
+        
+        let state = {
+            apiKey: '',
+            responses: {},
+            processing: false,
+            autoRotate: false,
+            currentRotationIndex: 0,
+            availableKeys: [],
+            selectedModel: 'gemini-2.5-pro'
+        };
+
+        // Prompts configuration (ported from Python app)
+        const PROMPTS = {
+            "highlights_reflection": {
+                "name": "📌 Highlights and Reflections",
+                "prompt": `Give me these points with quotes:
+- Highlights of the Day:
+- Areas for Improvement:
+- Reflections/Thoughts:
+- Small things that bring you joy throughout the day`
+            },
+            
+            "todo_list": {
+                "name": "📝 To-Do List",
+                "prompt": `I need a comprehensive to-do list based on my conversation transcripts. Please analyze the transcript and identify all tasks, commitments, and follow-up actions I mentioned or agreed to.
+
+Importantly: Only use items that I specifically said I would do. Do not include things other people said they would do.
+
+For each item, include enough detail that I can understand what needs to be done without having to review the entire transcript again. Use action verbs at the beginning of each task.
+
+Group related tasks together when possible, and highlight any dependencies between tasks (e.g., "Complete X before starting Y").
+
+Exclude routine activities or general comments that don't require specific action.`
+            },
+            
+            "daily_chart": {
+                "name": "📊 Daily Activity Chart",
+                "prompt": `Analyze my day and present the results in exactly this format:
+
+## 📊 Pie Chart-Style Analysis (Text Representation)
+Create a visual bar representation using block characters (█ and ░) showing each category with:
+- Duration in ~Xh Ym format
+- Percentage of total day in parentheses
+- Bar length proportional to time spent
+- Ordered by duration (longest to shortest)
+
+Format example:
+\`\`\`
+🧠 Deep Work ███████████████░░░░░░░░░░ ~4h15m (17.7%)
+🤝 Work Conversations █████████░░░░░░░░░░░░░░░ ~2h10m (9.0%)
+\`\`\`
+
+## 🧩 Activity Breakdown by Category
+Present activities in a clean table format with the following specifications:
+
+**Formatting Requirements:**
+- Use consistent emoji icons for each category type
+- Order categories by total duration (longest to shortest)
+- Include percentage of total day for each category
+- Use standardized time format (~Xh Ym for hours/minutes, ~Xm for minutes only)
+- Limit highlights to 2-3 key points per category, separated by semicolons
+- Use consistent category naming conventions
+
+**Standard Categories (use these when applicable):**
+- 🧠 Deep Work - focused, productive work tasks
+- 🤝 Work Conversations - meetings, discussions, collaboration
+- 🍛 Meals & Socializing - eating, social interactions, personal conversations
+- 🚃 Travel & Commute - all transportation and movement
+- 🎓 Learning & Development - educational content, skill building
+- 🤖 Personal Admin - household tasks, personal management, errands
+- 💤 Rest & Downtime - breaks, relaxation, entertainment
+- 🏃 Health & Fitness - exercise, health-related activities
+
+**Table Format:**
+\`\`\`
+| Category | Duration (% of day) | Highlights |
+|----------|---------------------|------------|
+| [emoji] [Category Name] | ~[Time] ([X.X%]) | [Key activities; separated by semicolons] |
+\`\`\``
+            },
+            
+            "suggestion": {
+                "name": "💡 Personal Improvement Suggestions",
+                "prompt": `My goal is to be better on every dimension of my life: personal, work, and family. Give me one concrete thing I could do to be better using these conversations by focusing on what I said and how I responded to the people in my life. Support this one concrete way I can be better with several examples to help me identify patterns I might not realize. Be candid.
+
+If prior responses are included:
+- Remind the user of what they've been working on in a single sentence at the top of the response.
+- Ensure that the response is consistent with the prior responses; but, if you notice positive growth, acknowledge it!
+- Gently remind the user of past feedback if it's relevant to the current response, but in a positive way - for example, "It's great that you've been working on x goal!"
+- When you make assertive recommendations, reference prior feedback - say something like "You've already been working on this goal, keep it up!" for each goal or piece of feedback from prior responses. Share this early, so the user can see that you've been paying attention to their progress.`
+            },
+            
+            "summary": {
+                "name": "📋 Day Summary",
+                "prompt": `I need a summary of my day based on my conversation transcripts from yesterday. Look at the transcript and respond with a summary of my day that I can use to review everything that happened quickly.
+
+Here are the things I want to be included in the summary:
+- Key meetings and conversations I participated in
+- Important information I learned or shared
+- Decisions I made or was involved in
+- Problems I encountered and solutions I found
+- Major themes or patterns in my conversations
+
+Format the summary to be readable and insightful, highlighting what matters most about my day. Keep it brief but comprehensive, capturing the essence of my experiences rather than listing every detail.
+
+Show me the summary in chronological order when possible, starting with morning activities and ending with evening ones. Prioritize significant events over routine interactions.`
+            },
+            
+            "daily_logs": {
+                "name": "📖 Structured Daily Logs",
+                "prompt": `You are an expert summarizer who creates a **highly structured, factual, and detailed log of daily events** from transcripts. The following is a daily transcript from my Limitless Pendant. Your main goal is to create the most comprehensive set of **objective notes** about the daily events and conversations in chronological order. The output should be a **multi-level bulleted list**, not a narrative story. The tone should be factual and easily scannable, like an executive summary or a detailed activity log.
+
+**Formatting Instructions:**
+- Create your own markdown headings for major events (e.g., "Morning Routine," "School BBQ").
+- Under these headings, use bolded sub-headings for more specific time blocks or interactions (e.g., "****Daycare Pick-up:****").
+- Insert timestamps or time ranges in the headings and sub-headings.
+- Under each sub-heading, use **concise bullet points** to list the key facts, actions, and conversation topics.
+- **Use parentheses () to add clarifying details**, such as names of people mentioned (e.g., talked with John (Kim's father)), specific costs ($5), or contextual notes (as you had correctly guessed).
+- At the beginning of the document, insert "Daily Summary <insert date in YYYY-MM-DD format>" in Header 1 size.
+
+**Content and Interpretation Instructions:**
+- Accurately infer events and the main topics of conversations.
+- Summarize conversations by focusing on the **key points and outcomes**, rather than quoting long exchanges.
+- Note that on occasion, you may see an unknown speaker identified, either as "Unknown" or "Speaker 1", "Speaker 2" etc.
+- Transcription errors may also create non-sensical transcriptions. When your interpretation is considered to be highly suspect due to nonsensical statements, make an explicit note that the original audio recording should be reviewed.
+- When summarizing, you will need to consider speaker misattribution errors alongside transcription errors. Where possible, correct the speaker attribution based on the context of the conversation.
+
+Transcript follows:`
+            },
+            
+            "new_learning": {
+                "name": "🎓 New Learning Points",
+                "prompt": `✍️ Please analyze the following transcribed conversation and extract all learning points, including:
+
+🧠 New Vocabulary – List any unfamiliar or newly learned Japanese or English words. Include:
+- Word/Phrase
+- Language (🇯🇵/🇬🇧)
+- Meaning/Translation
+- Example sentence (based on conversation or create one)
+
+📘 New Concepts or Terms – Summarize any new concepts, professional terminology, or ideas that came up. Include:
+- Term/Concept
+- Short explanation in plain language
+- Context or example from the conversation
+
+🔁 Corrections/Better Expressions – If there were any grammar mistakes or unnatural expressions, show the corrected versions with explanations.
+
+✨ Summary Memo – End with a short memo (in natural language) summarizing everything I learned today in a casual, reflective tone.`
+            }
+        };
+
+        // DOM Elements
+        const modelSelector = document.getElementById('modelSelector');
+        const modelInfo = document.getElementById('modelInfo');
+        const apiKeyInput = document.getElementById('apiKey');
+        const apiKeySelector = document.getElementById('apiKeySelector');
+        const apiKeyLabel = document.getElementById('apiKeyLabel');
+        const saveApiKeyButton = document.getElementById('saveApiKeyButton');
+        const deleteApiKeyButton = document.getElementById('deleteApiKeyButton');
+        const autoRotateToggle = document.getElementById('autoRotateToggle');
+        const currentApiIndicator = document.getElementById('currentApiIndicator');
+        const currentApiLabel = document.getElementById('currentApiLabel');
+        const exportKeysButton = document.getElementById('exportKeysButton');
+        const importKeysButton = document.getElementById('importKeysButton');
+        const importFileInput = document.getElementById('importFileInput');
+        const apiStatus = document.getElementById('apiStatus');
+        const transcriptInput = document.getElementById('transcriptInput');
+        const processAllButton = document.getElementById('processAllButton');
+        const progressSection = document.getElementById('progressSection');
+        const progressFill = document.getElementById('progressFill');
+        const statusText = document.getElementById('statusText');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const individualPrompts = document.getElementById('individualPrompts');
+
+        // Model Management
+        function loadSelectedModel() {
+            const saved = localStorage.getItem(MODEL_STORAGE_KEY);
+            return saved || 'gemini-2.5-pro';
+        }
+
+        function saveSelectedModel() {
+            localStorage.setItem(MODEL_STORAGE_KEY, state.selectedModel);
+        }
+
+        function handleModelSelection() {
+            state.selectedModel = modelSelector.value;
+            saveSelectedModel();
+            updateModelInfo();
+            showApiStatus(`✅ Model changed to ${MODELS[state.selectedModel].name}`, 'success');
+        }
+
+        function updateModelInfo() {
+            const model = MODELS[state.selectedModel];
+            if (!model) return;
+
+            const badges = model.badges.map(badge => 
+                `<span class="model-badge ${badge}">${badge.toUpperCase()}</span>`
+            ).join('');
+
+            modelInfo.innerHTML = `
+                <div class="model-name">${model.name}</div>
+                <div style="margin-bottom: 8px;">${badges}</div>
+                <div class="model-capabilities"><strong>Input:</strong> ${model.capabilities}</div>
+                <div class="model-capabilities"><strong>Output:</strong> ${model.output}</div>
+                <div class="model-description">${model.description}</div>
+                <div style="margin-top: 8px; color: #007bff; font-size: 11px;">
+                    💡 ${model.recommended}
+                </div>
+            `;
+        }
+
+        // API Key Management
+        const STORAGE_KEY = 'gemini_api_keys';
+
+        function loadSavedApiKeys() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            return saved ? JSON.parse(saved) : {};
+        }
+
+        function loadRotationSettings() {
+            const saved = localStorage.getItem(ROTATION_STORAGE_KEY);
+            return saved ? JSON.parse(saved) : { autoRotate: false, currentIndex: 0 };
+        }
+
+        function saveRotationSettings() {
+            const settings = {
+                autoRotate: state.autoRotate,
+                currentIndex: state.currentRotationIndex
+            };
+            localStorage.setItem(ROTATION_STORAGE_KEY, JSON.stringify(settings));
+        }
+
+        function updateAvailableKeys() {
+            const apiKeys = loadSavedApiKeys();
+            state.availableKeys = Object.entries(apiKeys).map(([label, key]) => ({
+                label,
+                key
+            }));
+            
+            // Reset rotation index if it's out of bounds
+            if (state.currentRotationIndex >= state.availableKeys.length) {
+                state.currentRotationIndex = 0;
+            }
+        }
+
+        function getNextApiKey() {
+            if (!state.autoRotate || state.availableKeys.length === 0) {
+                return state.apiKey;
+            }
+            
+            if (state.availableKeys.length === 1) {
+                return state.availableKeys[0].key;
+            }
+            
+            const currentKey = state.availableKeys[state.currentRotationIndex];
+            
+            // Rotate to next key for the next request
+            state.currentRotationIndex = (state.currentRotationIndex + 1) % state.availableKeys.length;
+            saveRotationSettings();
+            
+            // Update UI to show current key
+            updateCurrentApiIndicator(currentKey.label);
+            
+            return currentKey.key;
+        }
+
+        function updateCurrentApiIndicator(label) {
+            if (state.autoRotate && label) {
+                currentApiLabel.textContent = label;
+                currentApiIndicator.style.display = 'block';
+            } else {
+                currentApiIndicator.style.display = 'none';
+            }
+        }
+
+        function saveApiKeys(apiKeys) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(apiKeys));
+        }
+
+        function populateApiKeySelector() {
+            const apiKeys = loadSavedApiKeys();
+            apiKeySelector.innerHTML = '<option value="">Select saved API key...</option>';
+            
+            Object.entries(apiKeys).forEach(([label, key]) => {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = label;
+                apiKeySelector.appendChild(option);
+            });
+            
+            updateAvailableKeys();
+            updateAutoRotateUI();
+        }
+
+        function saveCurrentApiKey() {
+            const key = apiKeyInput.value.trim();
+            const label = apiKeyLabel.value.trim();
+            
+            if (!key || !label) return;
+            
+            const apiKeys = loadSavedApiKeys();
+            apiKeys[label] = key;
+            saveApiKeys(apiKeys);
+            
+            populateApiKeySelector();
+            apiKeySelector.value = key;
+            apiKeyLabel.value = '';
+            
+            showApiStatus(`✅ API key "${label}" saved successfully!`, 'success');
+            updateUI();
+        }
+
+        function deleteSelectedApiKey() {
+            const selectedKey = apiKeySelector.value;
+            if (!selectedKey) return;
+            
+            const apiKeys = loadSavedApiKeys();
+            const labelToDelete = Object.keys(apiKeys).find(label => apiKeys[label] === selectedKey);
+            
+            if (labelToDelete) {
+                delete apiKeys[labelToDelete];
+                saveApiKeys(apiKeys);
+                populateApiKeySelector();
+                
+                if (state.apiKey === selectedKey) {
+                    state.apiKey = '';
+                    apiKeyInput.value = '';
+                }
+                
+                showApiStatus(`✅ API key "${labelToDelete}" deleted successfully!`, 'success');
+                updateUI();
+            }
+        }
+
+        function showApiStatus(message, type) {
+            apiStatus.textContent = message;
+            apiStatus.className = `status ${type}`;
+            apiStatus.style.display = 'block';
+            
+            setTimeout(() => {
+                apiStatus.style.display = 'none';
+            }, 3000);
+        }
+
+        function handleAutoRotateToggle() {
+            state.autoRotate = autoRotateToggle.checked;
+            saveRotationSettings();
+            updateAutoRotateUI();
+            
+            if (state.autoRotate) {
+                showApiStatus('✅ Auto-rotation enabled', 'success');
+            } else {
+                showApiStatus('ℹ️ Auto-rotation disabled', 'success');
+            }
+        }
+
+        function updateAutoRotateUI() {
+            const hasMultipleKeys = state.availableKeys.length > 1;
+            
+            // Disable toggle if less than 2 keys
+            autoRotateToggle.disabled = !hasMultipleKeys;
+            
+            if (!hasMultipleKeys && state.autoRotate) {
+                state.autoRotate = false;
+                autoRotateToggle.checked = false;
+                saveRotationSettings();
+            }
+            
+            // Update current API indicator
+            if (state.autoRotate && hasMultipleKeys) {
+                const nextKey = state.availableKeys[state.currentRotationIndex];
+                updateCurrentApiIndicator(nextKey ? nextKey.label : '');
+            } else {
+                updateCurrentApiIndicator('');
+            }
+        }
+
+        // Import/Export Functions
+        function exportApiKeys() {
+            const apiKeys = loadSavedApiKeys();
+            const rotationSettings = loadRotationSettings();
+            
+            const exportData = {
+                version: "1.0",
+                exportDate: new Date().toISOString(),
+                apiKeys: apiKeys,
+                rotationSettings: rotationSettings,
+                selectedModel: state.selectedModel
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `gemini_config_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showApiStatus(`✅ Configuration exported successfully!`, 'success');
+        }
+
+        function validateImportData(data) {
+            // Check if it's a valid object
+            if (typeof data !== 'object' || data === null) {
+                throw new Error('Invalid JSON format');
+            }
+            
+            // Check for required fields
+            if (!data.apiKeys || typeof data.apiKeys !== 'object') {
+                throw new Error('Missing or invalid apiKeys field');
+            }
+            
+            // Validate each API key entry
+            Object.entries(data.apiKeys).forEach(([label, key]) => {
+                if (typeof label !== 'string' || label.trim() === '') {
+                    throw new Error(`Invalid label: "${label}"`);
+                }
+                if (typeof key !== 'string' || key.trim() === '') {
+                    throw new Error(`Invalid API key for label: "${label}"`);
+                }
+            });
+            
+            return true;
+        }
+
+        function importApiKeys(file) {
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importData = JSON.parse(e.target.result);
+                    
+                    // Validate the imported data
+                    validateImportData(importData);
+                    
+                    // Ask user for confirmation
+                    const keyCount = Object.keys(importData.apiKeys).length;
+                    const confirmMessage = `Import ${keyCount} API keys? This will merge with existing keys (duplicates will be overwritten).`;
+                    
+                    if (confirm(confirmMessage)) {
+                        // Merge with existing API keys
+                        const existingKeys = loadSavedApiKeys();
+                        const mergedKeys = { ...existingKeys, ...importData.apiKeys };
+                        
+                        // Save merged keys
+                        saveApiKeys(mergedKeys);
+                        
+                        // Import rotation settings if available
+                        if (importData.rotationSettings && 
+                            typeof importData.rotationSettings === 'object') {
+                            state.autoRotate = importData.rotationSettings.autoRotate || false;
+                            state.currentRotationIndex = importData.rotationSettings.currentIndex || 0;
+                            autoRotateToggle.checked = state.autoRotate;
+                            saveRotationSettings();
+                        }
+                        
+                        // Import model selection if available
+                        if (importData.selectedModel && 
+                            MODELS[importData.selectedModel]) {
+                            state.selectedModel = importData.selectedModel;
+                            modelSelector.value = state.selectedModel;
+                            saveSelectedModel();
+                            updateModelInfo();
+                        }
+                        
+                        // Refresh UI
+                        populateApiKeySelector();
+                        updateUI();
+                        
+                        showApiStatus(`✅ Successfully imported configuration with ${keyCount} API keys!`, 'success');
+                    }
+                    
+                } catch (error) {
+                    console.error('Import error:', error);
+                    showApiStatus(`❌ Import failed: ${error.message}`, 'error');
+                }
+            };
+            
+            reader.onerror = function() {
+                showApiStatus('❌ Failed to read file', 'error');
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // Initialize the application
+        function init() {
+            // Load saved settings
+            state.selectedModel = loadSelectedModel();
+            modelSelector.value = state.selectedModel;
+            updateModelInfo();
+            
+            const rotationSettings = loadRotationSettings();
+            state.autoRotate = rotationSettings.autoRotate;
+            state.currentRotationIndex = rotationSettings.currentIndex;
+            autoRotateToggle.checked = state.autoRotate;
+            
+            setupEventListeners();
+            setupIndividualPrompts();
+            populateApiKeySelector();
+            updateUI();
+        }
+
+        function setupEventListeners() {
+            modelSelector.addEventListener('change', handleModelSelection);
+            apiKeyInput.addEventListener('input', handleApiKeyChange);
+            apiKeySelector.addEventListener('change', handleApiKeySelection);
+            apiKeyLabel.addEventListener('input', updateUI);
+            saveApiKeyButton.addEventListener('click', saveCurrentApiKey);
+            deleteApiKeyButton.addEventListener('click', deleteSelectedApiKey);
+            autoRotateToggle.addEventListener('change', handleAutoRotateToggle);
+            exportKeysButton.addEventListener('click', exportApiKeys);
+            importKeysButton.addEventListener('click', () => importFileInput.click());
+            importFileInput.addEventListener('change', (e) => {
+                if (e.target.files[0]) {
+                    importApiKeys(e.target.files[0]);
+                    // Reset file input so the same file can be selected again
+                    e.target.value = '';
+                }
+            });
+            transcriptInput.addEventListener('input', updateUI);
+            processAllButton.addEventListener('click', processAllPrompts);
+        }
+
+        function handleApiKeyChange() {
+            const apiKey = apiKeyInput.value.trim();
+            state.apiKey = apiKey;
+            
+            if (apiKey) {
+                showApiStatus('✅ API Key ready to use', 'success');
+                // Clear selector if manually entering a key
+                apiKeySelector.value = '';
+            } else {
+                apiStatus.style.display = 'none';
+            }
+            
+            updateUI();
+        }
+
+        function handleApiKeySelection() {
+            const selectedKey = apiKeySelector.value;
+            if (selectedKey) {
+                state.apiKey = selectedKey;
+                apiKeyInput.value = selectedKey;
+                showApiStatus('✅ API Key selected from saved keys', 'success');
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            const hasApiKey = state.apiKey.length > 0;
+            const hasAvailableKeys = state.availableKeys.length > 0;
+            const hasTranscript = transcriptInput.value.trim().length > 0;
+            const hasLabel = apiKeyLabel.value.trim().length > 0;
+            const hasNewKey = apiKeyInput.value.trim().length > 0;
+            const hasSelectedKey = apiKeySelector.value.length > 0;
+            
+            // Can process if we have transcript and either a manual API key or saved keys for rotation
+            const canProcess = hasTranscript && !state.processing && 
+                              (hasApiKey || (state.autoRotate && hasAvailableKeys));
+            
+            const canSave = hasNewKey && hasLabel;
+            const canDelete = hasSelectedKey;
+            const canExport = hasAvailableKeys;
+            
+            // Update processing buttons
+            processAllButton.disabled = !canProcess;
+            
+            // Update API key management buttons
+            saveApiKeyButton.disabled = !canSave;
+            deleteApiKeyButton.disabled = !canDelete;
+            exportKeysButton.disabled = !canExport;
+            
+            // Update individual prompt buttons
+            const individualButtons = document.querySelectorAll('.individual-process-button');
+            individualButtons.forEach(button => {
+                button.disabled = !canProcess;
+            });
+        }
+
+        function setupIndividualPrompts() {
+            individualPrompts.innerHTML = '';
+            
+            Object.entries(PROMPTS).forEach(([key, data]) => {
+                const promptItem = document.createElement('div');
+                promptItem.className = 'prompt-item';
+                
+                const promptName = document.createElement('div');
+                promptName.className = 'prompt-name';
+                promptName.textContent = data.name;
+                
+                const processButton = document.createElement('button');
+                processButton.className = 'individual-process-button';
+                processButton.textContent = 'Process';
+                processButton.addEventListener('click', () => processIndividualPrompt(key, processButton));
+                
+                promptItem.appendChild(promptName);
+                promptItem.appendChild(processButton);
+                individualPrompts.appendChild(promptItem);
+            });
+        }
+
+        async function callGeminiAPI(prompt, promptName = '') {
+            // Get the appropriate API key (either current or rotated)
+            const apiKeyToUse = getNextApiKey();
+            
+            if (!apiKeyToUse) {
+                throw new Error('API key is required');
+            }
+
+            // Build the API URL with the selected model
+            const apiUrl = `${GEMINI_API_BASE_URL}${state.selectedModel}:generateContent?key=${apiKeyToUse}`;
+
+            // Update status to show which API key and model are being used
+            let statusMessage = `Processing ${promptName}`;
+            if (state.autoRotate && promptName) {
+                const currentKeyInfo = state.availableKeys.find(k => k.key === apiKeyToUse);
+                if (currentKeyInfo) {
+                    statusMessage += ` using ${currentKeyInfo.label} (${MODELS[state.selectedModel].name})...`;
+                }
+            } else if (promptName) {
+                statusMessage += ` using ${MODELS[state.selectedModel].name}...`;
+            }
+            
+            if (promptName) {
+                statusText.textContent = statusMessage;
+            }
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: prompt
+                        }]
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                const currentKeyInfo = state.availableKeys.find(k => k.key === apiKeyToUse);
+                const keyLabel = currentKeyInfo ? currentKeyInfo.label : 'Unknown';
+                throw new Error(`${errorData.error?.message || 'API call failed'} (${MODELS[state.selectedModel].name}, key: ${keyLabel})`);
+            }
+
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
+        }
+
+        async function processAllPrompts() {
+            const transcript = transcriptInput.value.trim();
+            if (!transcript || (!state.apiKey && !(state.autoRotate && state.availableKeys.length > 0))) return;
+
+            state.processing = true;
+            updateUI();
+            
+            progressSection.style.display = 'block';
+            progressFill.style.width = '0%';
+            
+            const promptKeys = Object.keys(PROMPTS);
+            
+            try {
+                for (let i = 0; i < promptKeys.length; i++) {
+                    const key = promptKeys[i];
+                    const data = PROMPTS[key];
+                    
+                    if (!state.autoRotate) {
+                        statusText.textContent = `Processing: ${data.name}...`;
+                    }
+                    progressFill.style.width = `${((i + 1) / promptKeys.length) * 100}%`;
+                    
+                    const fullPrompt = `${data.prompt}\n\n---\n\n${transcript}`;
+                    const response = await callGeminiAPI(fullPrompt, data.name);
+                    state.responses[key] = response;
+                    
+                    // Small delay between requests
+                    if (i < promptKeys.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+                
+                statusText.textContent = '✅ All prompts processed successfully!';
+                renderResults();
+                
+            } catch (error) {
+                statusText.textContent = `❌ Error: ${error.message}`;
+                console.error('Processing error:', error);
+            } finally {
+                state.processing = false;
+                updateUI();
+            }
+        }
+
+        async function processIndividualPrompt(key, buttonElement) {
+            const transcript = transcriptInput.value.trim();
+            if (!transcript || (!state.apiKey && !(state.autoRotate && state.availableKeys.length > 0))) return;
+
+            const data = PROMPTS[key];
+            const button = buttonElement;
+            const originalText = button.textContent;
+            
+            button.textContent = 'Processing...';
+            button.disabled = true;
+            
+            try {
+                const fullPrompt = `${data.prompt}\n\n---\n\n${transcript}`;
+                const response = await callGeminiAPI(fullPrompt, data.name);
+                state.responses[key] = response;
+                renderResults();
+            } catch (error) {
+                alert(`Error processing ${data.name}: ${error.message}`);
+                console.error('Processing error:', error);
+            } finally {
+                button.textContent = originalText;
+                updateUI();
+            }
+        }
+
+        function renderResults() {
+            if (Object.keys(state.responses).length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="no-results">
+                        No results yet. Process your transcript to see the analysis.
+                    </div>
+                `;
+                return;
+            }
+
+            // Create container for tabs and content
+            resultsContainer.innerHTML = `
+                <div class="tabs" id="tabsContainer"></div>
+                <div id="tabContentsContainer"></div>
+                <div class="download-section">
+                    <button class="download-button" id="downloadButton">
+                        💾 Download Consolidated Report
+                    </button>
+                </div>
+            `;
+
+            // Get containers
+            const tabsContainer = document.getElementById('tabsContainer');
+            const tabContentsContainer = document.getElementById('tabContentsContainer');
+            const downloadButton = document.getElementById('downloadButton');
+
+            // Add download button event listener
+            downloadButton.addEventListener('click', downloadConsolidatedReport);
+
+            // Create tabs with proper event listeners
+            let firstTabButton = null;
+            Object.entries(PROMPTS).forEach(([key, data]) => {
+                // Create tab button
+                const tabButton = document.createElement('button');
+                tabButton.className = 'tab';
+                tabButton.textContent = data.name;
+                tabButton.addEventListener('click', () => showTab(key, tabButton));
+                tabsContainer.appendChild(tabButton);
+                
+                if (!firstTabButton) firstTabButton = tabButton;
+
+                // Create tab content
+                const response = state.responses[key] || 'No response yet';
+                const tabContent = document.createElement('div');
+                tabContent.id = `tab-${key}`;
+                tabContent.className = 'tab-content';
+                
+                const responseContainer = document.createElement('div');
+                responseContainer.className = 'response-container';
+                
+                const responseText = document.createElement('div');
+                responseText.className = 'response-text';
+                responseText.textContent = response;
+                
+                const copyButton = document.createElement('button');
+                copyButton.className = 'copy-button';
+                copyButton.textContent = `📋 Copy ${data.name}`;
+                copyButton.addEventListener('click', () => copyToClipboard(key, copyButton));
+                
+                responseContainer.appendChild(responseText);
+                tabContent.appendChild(responseContainer);
+                tabContent.appendChild(copyButton);
+                tabContentsContainer.appendChild(tabContent);
+            });
+
+            // Show first tab with content
+            const firstKeyWithContent = Object.keys(state.responses)[0];
+            if (firstKeyWithContent && firstTabButton) {
+                showTab(firstKeyWithContent, firstTabButton);
+            }
+        }
+
+        function showTab(key, tabElement) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            const tabContent = document.getElementById(`tab-${key}`);
+            if (tabContent) {
+                tabContent.classList.add('active');
+            }
+            
+            // Add active class to selected tab
+            if (tabElement) {
+                tabElement.classList.add('active');
+            }
+        }
+
+        function formatResponse(text) {
+            // Simple HTML escaping and preserve line breaks
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function copyToClipboard(key, buttonElement) {
+            const response = state.responses[key];
+            if (!response) return;
+            
+            navigator.clipboard.writeText(response).then(() => {
+                // Show temporary feedback
+                if (buttonElement) {
+                    const originalText = buttonElement.textContent;
+                    buttonElement.textContent = '✅ Copied!';
+                    setTimeout(() => {
+                        buttonElement.textContent = originalText;
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                // Fallback: create a temporary textarea
+                const textarea = document.createElement('textarea');
+                textarea.value = response;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                // Show feedback even on fallback
+                if (buttonElement) {
+                    const originalText = buttonElement.textContent;
+                    buttonElement.textContent = '✅ Copied!';
+                    setTimeout(() => {
+                        buttonElement.textContent = originalText;
+                    }, 2000);
+                }
+            });
+        }
+
+        function downloadConsolidatedReport() {
+            const date = new Date().toISOString().split('T')[0];
+            let output = `# AI Analysis Results - ${date}\n\n`;
+            
+            // Map prompt keys to custom section titles
+            const sectionTitles = {
+                "highlights_reflection": "# High/Low Light and Reflection",
+                "todo_list": "# TodoList",
+                "daily_chart": "# DailyChart",
+                "suggestion": "# Suggestion", 
+                "summary": "# Summary",
+                "daily_logs": "# Daily Logs",
+                "new_learning": "# New Learning"
+            };
+            
+            Object.entries(PROMPTS).forEach(([key, data]) => {
+                if (key in state.responses) {
+                    output += `${sectionTitles[key] || `# ${data.name}`}\n\n`;
+                    output += state.responses[key];
+                    output += '\n\n---\n\n';
+                }
+            });
+            
+            const blob = new Blob([output], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `daily_analysis_${date.replace(/-/g, '')}_${new Date().getHours()}${new Date().getMinutes()}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
