@@ -430,6 +430,7 @@
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
+            margin-bottom: 15px;
         }
 
         .add-prompt-btn {
@@ -462,6 +463,66 @@
 
         .reset-all-btn:hover {
             background-color: #f57c00;
+        }
+
+        .prompt-import-export {
+            padding: 12px;
+            background-color: #f0f7ff;
+            border-radius: 6px;
+            border: 1px solid #d0e7ff;
+            margin-top: 15px;
+        }
+
+        .prompt-import-export-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .prompt-import-export-description {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .prompt-import-export-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .export-prompts-btn, .import-prompts-btn {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            flex: 1;
+            transition: background-color 0.3s;
+        }
+
+        .export-prompts-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .export-prompts-btn:hover:not(:disabled) {
+            background-color: #1976D2;
+        }
+
+        .export-prompts-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .import-prompts-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .import-prompts-btn:hover:not(:disabled) {
+            background-color: #388E3C;
         }
 
         /* Modal Editor Styles */
@@ -1128,6 +1189,21 @@
                             🔄 Reset All
                         </button>
                     </div>
+                    <div class="prompt-import-export">
+                        <div class="prompt-import-export-title">📦 Prompt Library</div>
+                        <div class="prompt-import-export-description">
+                            Export your prompts to share or backup, or import prompt collections
+                        </div>
+                        <div class="prompt-import-export-controls">
+                            <button id="exportPromptsButton" class="export-prompts-btn">
+                                📤 Export Prompts
+                            </button>
+                            <button id="importPromptsButton" class="import-prompts-btn">
+                                📥 Import Prompts
+                            </button>
+                            <input type="file" id="importPromptsFileInput" class="file-input" accept=".json" />
+                        </div>
+                    </div>
                 </div>
 
                 <div class="processing-order">
@@ -1460,6 +1536,9 @@ Transcript follows:`,
         const promptList = document.getElementById('promptList');
         const addPromptButton = document.getElementById('addPromptButton');
         const resetAllPromptsButton = document.getElementById('resetAllPromptsButton');
+        const exportPromptsButton = document.getElementById('exportPromptsButton');
+        const importPromptsButton = document.getElementById('importPromptsButton');
+        const importPromptsFileInput = document.getElementById('importPromptsFileInput');
         const processingOrder = document.getElementById('processingOrder');
         
         // Modal Elements
@@ -1802,6 +1881,108 @@ Transcript follows:`,
             return maxOrder + 1;
         }
 
+        // Prompt Export/Import Functions
+        function exportPrompts() {
+            const exportData = {
+                version: "1.0",
+                exportDate: new Date().toISOString(),
+                promptCount: Object.keys(PROMPTS).length,
+                prompts: PROMPTS
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `prompts_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showApiStatus(`✅ Exported ${exportData.promptCount} prompts successfully!`, 'success');
+        }
+
+        function validatePromptImportData(data) {
+            if (typeof data !== 'object' || data === null) {
+                throw new Error('Invalid JSON format');
+            }
+            
+            if (!data.prompts || typeof data.prompts !== 'object') {
+                throw new Error('Missing or invalid prompts field');
+            }
+            
+            // Validate each prompt
+            Object.entries(data.prompts).forEach(([key, prompt]) => {
+                if (!prompt.name || typeof prompt.name !== 'string') {
+                    throw new Error(`Invalid prompt name for key: "${key}"`);
+                }
+                if (!prompt.prompt || typeof prompt.prompt !== 'string') {
+                    throw new Error(`Invalid prompt content for: "${prompt.name}"`);
+                }
+            });
+            
+            return true;
+        }
+
+        function importPrompts(file) {
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importData = JSON.parse(e.target.result);
+                    
+                    // Validate the imported data
+                    validatePromptImportData(importData);
+                    
+                    const importedCount = Object.keys(importData.prompts).length;
+                    const customPromptsCount = Object.values(importData.prompts).filter(p => !p.isDefault).length;
+                    const defaultPromptsCount = Object.values(importData.prompts).filter(p => p.isDefault).length;
+                    
+                    const confirmMessage = `Import ${importedCount} prompts?\n` +
+                        `• ${defaultPromptsCount} default prompts (will replace current defaults)\n` +
+                        `• ${customPromptsCount} custom prompts\n\n` +
+                        `This will replace all your current prompts.`;
+                    
+                    if (confirm(confirmMessage)) {
+                        // Import all prompts
+                        PROMPTS = importData.prompts;
+                        
+                        // Ensure orders are set
+                        let maxOrder = 0;
+                        Object.values(PROMPTS).forEach(prompt => {
+                            if (!prompt.order) {
+                                prompt.order = ++maxOrder;
+                            } else {
+                                maxOrder = Math.max(maxOrder, prompt.order);
+                            }
+                        });
+                        
+                        // Save and refresh UI
+                        saveCustomPrompts();
+                        renderPromptList();
+                        updateProcessingOrder();
+                        setupIndividualPrompts();
+                        
+                        showApiStatus(`✅ Successfully imported ${importedCount} prompts!`, 'success');
+                    }
+                    
+                } catch (error) {
+                    console.error('Import error:', error);
+                    showApiStatus(`❌ Import failed: ${error.message}`, 'error');
+                }
+            };
+            
+            reader.onerror = function() {
+                showApiStatus('❌ Failed to read file', 'error');
+            };
+            
+            reader.readAsText(file);
+        }
+
         function renderPromptList() {
             const orderedPrompts = getOrderedPrompts();
             promptList.innerHTML = '';
@@ -1925,6 +2106,9 @@ Transcript follows:`,
                 li.style.color = '#999';
                 processingOrder.appendChild(li);
             }
+            
+            // Update export button state
+            exportPromptsButton.disabled = Object.keys(PROMPTS).length === 0;
         }
 
         function duplicatePrompt(sourceKey) {
@@ -1950,7 +2134,6 @@ Transcript follows:`,
         }
 
         // API Key Management
-
         function loadSavedApiKeys() {
             const saved = localStorage.getItem(STORAGE_KEY);
             return saved ? JSON.parse(saved) : {};
@@ -2282,6 +2465,17 @@ Transcript follows:`,
                     updateProcessingOrder();
                     setupIndividualPrompts();
                     showApiStatus('✅ All prompts reset to defaults', 'success');
+                }
+            });
+            
+            // Prompt export/import event listeners
+            exportPromptsButton.addEventListener('click', exportPrompts);
+            importPromptsButton.addEventListener('click', () => importPromptsFileInput.click());
+            importPromptsFileInput.addEventListener('change', (e) => {
+                if (e.target.files[0]) {
+                    importPrompts(e.target.files[0]);
+                    // Reset file input so the same file can be selected again
+                    e.target.value = '';
                 }
             });
             
