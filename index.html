@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Analysis with Gemini AI and LimitlessAI</title>
+    <title>Daily Analysis with Gemini AI</title>
     <style>
         * {
             margin: 0;
@@ -292,6 +292,375 @@
             font-size: 12px;
             color: #666;
             margin-bottom: 10px;
+        }
+
+        .prompt-management-section {
+            margin-bottom: 25px;
+        }
+
+        .prompt-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .prompt-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            background-color: white;
+        }
+
+        .prompt-item:last-child {
+            border-bottom: none;
+        }
+
+        .prompt-item.disabled {
+            background-color: #f8f9fa;
+            opacity: 0.7;
+        }
+
+        .prompt-toggle {
+            margin-right: 10px;
+        }
+
+        .prompt-toggle input[type="checkbox"] {
+            transform: scale(1.1);
+            accent-color: #4CAF50;
+        }
+
+        .prompt-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .prompt-name {
+            font-weight: 500;
+            color: #333;
+            font-size: 13px;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .prompt-meta {
+            font-size: 11px;
+            color: #666;
+            display: flex;
+            gap: 8px;
+        }
+
+        .prompt-badge {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 1px 4px;
+            border-radius: 2px;
+            font-size: 9px;
+            font-weight: bold;
+        }
+
+        .prompt-badge.custom {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+
+        .prompt-controls {
+            display: flex;
+            gap: 4px;
+            margin-left: 8px;
+        }
+
+        .prompt-control-btn {
+            padding: 4px 6px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .edit-btn {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .edit-btn:hover {
+            background-color: #bbdefb;
+        }
+
+        .delete-btn {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+
+        .delete-btn:hover {
+            background-color: #ffcdd2;
+        }
+
+        .delete-btn:disabled {
+            background-color: #f5f5f5;
+            color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .reset-btn {
+            background-color: #f3e5f5;
+            color: #9c27b0;
+        }
+
+        .reset-btn:hover {
+            background-color: #e1bee7;
+        }
+
+        .duplicate-btn {
+            background-color: #e8f5e8;
+            color: #4caf50;
+        }
+
+        .duplicate-btn:hover {
+            background-color: #c8e6c9;
+        }
+
+        .prompt-management-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .add-prompt-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            flex: 1;
+        }
+
+        .add-prompt-btn:hover {
+            background-color: #45a049;
+        }
+
+        .reset-all-btn {
+            background-color: #ff9800;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            flex: 1;
+        }
+
+        .reset-all-btn:hover {
+            background-color: #f57c00;
+        }
+
+        /* Modal Editor Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 20px 25px 15px 25px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .modal-close:hover {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 25px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .form-textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .form-help {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .character-counter {
+            font-size: 12px;
+            color: #999;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .modal-footer {
+            padding: 15px 25px 20px 25px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .modal-button-primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .modal-button-primary:hover {
+            background-color: #45a049;
+        }
+
+        .modal-button-primary:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .modal-button-secondary {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .modal-button-secondary:hover {
+            background-color: #e9ecef;
+        }
+
+        .error-message {
+            color: #d32f2f;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .modal-content {
+                max-width: 95%;
+                margin: 10px;
+            }
+            
+            .modal-header, .modal-body, .modal-footer {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
         }
 
         .model-selection-section {
@@ -744,16 +1113,25 @@
                     </div>
                 </div>
 
+                <div class="prompt-management-section">
+                    <h3>🎛️ Prompt Management</h3>
+                    <div id="promptList" class="prompt-list">
+                        <!-- Prompt items will be populated here -->
+                    </div>
+                    <div class="prompt-management-controls">
+                        <button id="addPromptButton" class="add-prompt-btn">
+                            ➕ Add Prompt
+                        </button>
+                        <button id="resetAllPromptsButton" class="reset-all-btn">
+                            🔄 Reset All
+                        </button>
+                    </div>
+                </div>
+
                 <div class="processing-order">
                     <h3>📝 Processing Order:</h3>
                     <ul id="processingOrder">
-                        <li>1. 📌 Highlights and Reflections</li>
-                        <li>2. 📝 To-Do List</li>
-                        <li>3. 📊 Daily Activity Chart</li>
-                        <li>4. 💡 Personal Improvement Suggestions</li>
-                        <li>5. 📋 Day Summary</li>
-                        <li>6. 📖 Structured Daily Logs</li>
-                        <li>7. 🎓 New Learning Points</li>
+                        <!-- Will be dynamically populated -->
                     </ul>
                 </div>
 
@@ -812,6 +1190,56 @@
         </div>
     </div>
 
+    <!-- Prompt Editor Modal -->
+    <div id="promptEditorModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle" class="modal-title">Edit Prompt</h2>
+                <button id="modalClose" class="modal-close" type="button">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="promptEditorForm">
+                    <div class="form-group">
+                        <label for="promptName" class="form-label">Prompt Name</label>
+                        <input 
+                            type="text" 
+                            id="promptName" 
+                            class="form-input" 
+                            placeholder="Enter a descriptive name for this prompt"
+                            required
+                        >
+                        <div id="nameError" class="error-message">Please enter a prompt name</div>
+                        <div class="form-help">This name will appear in tabs and the processing list</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="promptContent" class="form-label">Prompt Content</label>
+                        <textarea 
+                            id="promptContent" 
+                            class="form-textarea" 
+                            placeholder="Enter the full prompt text that will be sent to the AI model..."
+                            required
+                        ></textarea>
+                        <div id="contentError" class="error-message">Please enter prompt content</div>
+                        <div class="character-counter" id="characterCounter">0 characters</div>
+                        <div class="form-help">
+                            This is the instruction text that will be sent to the AI model. 
+                            Use clear, specific instructions for best results.
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="cancelButton" class="modal-button modal-button-secondary">
+                    Cancel
+                </button>
+                <button type="submit" id="saveButton" class="modal-button modal-button-primary" form="promptEditorForm">
+                    Save Prompt
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Configuration and state
         const GEMINI_API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models/';
@@ -856,15 +1284,18 @@
             selectedModel: 'gemini-2.5-pro'
         };
 
-        // Prompts configuration (ported from Python app)
-        const PROMPTS = {
+        // Default prompts configuration with metadata
+        const DEFAULT_PROMPTS = {
             "highlights_reflection": {
                 "name": "📌 Highlights and Reflections",
                 "prompt": `Give me these points with quotes:
 - Highlights of the Day:
 - Areas for Improvement:
 - Reflections/Thoughts:
-- Small things that bring you joy throughout the day`
+- Small things that bring you joy throughout the day`,
+                "enabled": true,
+                "isDefault": true,
+                "order": 1
             },
             
             "todo_list": {
@@ -877,7 +1308,10 @@ For each item, include enough detail that I can understand what needs to be done
 
 Group related tasks together when possible, and highlight any dependencies between tasks (e.g., "Complete X before starting Y").
 
-Exclude routine activities or general comments that don't require specific action.`
+Exclude routine activities or general comments that don't require specific action.`,
+                "enabled": true,
+                "isDefault": true,
+                "order": 2
             },
             
             "daily_chart": {
@@ -923,7 +1357,10 @@ Present activities in a clean table format with the following specifications:
 | Category | Duration (% of day) | Highlights |
 |----------|---------------------|------------|
 | [emoji] [Category Name] | ~[Time] ([X.X%]) | [Key activities; separated by semicolons] |
-\`\`\``
+\`\`\``,
+                "enabled": true,
+                "isDefault": true,
+                "order": 3
             },
             
             "suggestion": {
@@ -934,7 +1371,10 @@ If prior responses are included:
 - Remind the user of what they've been working on in a single sentence at the top of the response.
 - Ensure that the response is consistent with the prior responses; but, if you notice positive growth, acknowledge it!
 - Gently remind the user of past feedback if it's relevant to the current response, but in a positive way - for example, "It's great that you've been working on x goal!"
-- When you make assertive recommendations, reference prior feedback - say something like "You've already been working on this goal, keep it up!" for each goal or piece of feedback from prior responses. Share this early, so the user can see that you've been paying attention to their progress.`
+- When you make assertive recommendations, reference prior feedback - say something like "You've already been working on this goal, keep it up!" for each goal or piece of feedback from prior responses. Share this early, so the user can see that you've been paying attention to their progress.`,
+                "enabled": true,
+                "isDefault": true,
+                "order": 4
             },
             
             "summary": {
@@ -950,7 +1390,10 @@ Here are the things I want to be included in the summary:
 
 Format the summary to be readable and insightful, highlighting what matters most about my day. Keep it brief but comprehensive, capturing the essence of my experiences rather than listing every detail.
 
-Show me the summary in chronological order when possible, starting with morning activities and ending with evening ones. Prioritize significant events over routine interactions.`
+Show me the summary in chronological order when possible, starting with morning activities and ending with evening ones. Prioritize significant events over routine interactions.`,
+                "enabled": true,
+                "isDefault": true,
+                "order": 5
             },
             
             "daily_logs": {
@@ -972,7 +1415,10 @@ Show me the summary in chronological order when possible, starting with morning 
 - Transcription errors may also create non-sensical transcriptions. When your interpretation is considered to be highly suspect due to nonsensical statements, make an explicit note that the original audio recording should be reviewed.
 - When summarizing, you will need to consider speaker misattribution errors alongside transcription errors. Where possible, correct the speaker attribution based on the context of the conversation.
 
-Transcript follows:`
+Transcript follows:`,
+                "enabled": true,
+                "isDefault": true,
+                "order": 6
             },
             
             "new_learning": {
@@ -992,13 +1438,41 @@ Transcript follows:`
 
 🔁 Corrections/Better Expressions – If there were any grammar mistakes or unnatural expressions, show the corrected versions with explanations.
 
-✨ Summary Memo – End with a short memo (in natural language) summarizing everything I learned today in a casual, reflective tone.`
+✨ Summary Memo – End with a short memo (in natural language) summarizing everything I learned today in a casual, reflective tone.`,
+                "enabled": true,
+                "isDefault": true,
+                "order": 7
             }
         };
+
+        // Working prompts (will be populated from localStorage or defaults)
+        let PROMPTS = {};
+
+        // Modal state
+        let currentEditingKey = null;
+        let isNewPrompt = false;
 
         // DOM Elements
         const modelSelector = document.getElementById('modelSelector');
         const modelInfo = document.getElementById('modelInfo');
+        const promptList = document.getElementById('promptList');
+        const addPromptButton = document.getElementById('addPromptButton');
+        const resetAllPromptsButton = document.getElementById('resetAllPromptsButton');
+        const processingOrder = document.getElementById('processingOrder');
+        
+        // Modal Elements
+        const promptEditorModal = document.getElementById('promptEditorModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalClose = document.getElementById('modalClose');
+        const promptEditorForm = document.getElementById('promptEditorForm');
+        const promptNameInput = document.getElementById('promptName');
+        const promptContentInput = document.getElementById('promptContent');
+        const nameError = document.getElementById('nameError');
+        const contentError = document.getElementById('contentError');
+        const characterCounter = document.getElementById('characterCounter');
+        const cancelButton = document.getElementById('cancelButton');
+        const saveButton = document.getElementById('saveButton');
+        
         const apiKeyInput = document.getElementById('apiKey');
         const apiKeySelector = document.getElementById('apiKeySelector');
         const apiKeyLabel = document.getElementById('apiKeyLabel');
@@ -1018,6 +1492,178 @@ Transcript follows:`
         const statusText = document.getElementById('statusText');
         const resultsContainer = document.getElementById('resultsContainer');
         const individualPrompts = document.getElementById('individualPrompts');
+
+        // Modal Management Functions
+        function openModal(key = null) {
+            currentEditingKey = key;
+            isNewPrompt = !key;
+            
+            if (isNewPrompt) {
+                modalTitle.textContent = 'Add New Prompt';
+                promptNameInput.value = '';
+                promptContentInput.value = '';
+                saveButton.textContent = 'Add Prompt';
+            } else {
+                modalTitle.textContent = 'Edit Prompt';
+                const prompt = PROMPTS[key];
+                promptNameInput.value = prompt.name;
+                promptContentInput.value = prompt.prompt;
+                saveButton.textContent = 'Save Changes';
+            }
+            
+            // Clear any error states
+            clearErrors();
+            updateCharacterCounter();
+            
+            // Show modal
+            promptEditorModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Focus on name input
+            setTimeout(() => {
+                promptNameInput.focus();
+                promptNameInput.select();
+            }, 100);
+        }
+
+        function closeModal() {
+            promptEditorModal.classList.remove('active');
+            document.body.style.overflow = '';
+            currentEditingKey = null;
+            isNewPrompt = false;
+            
+            // Clear form
+            promptNameInput.value = '';
+            promptContentInput.value = '';
+            clearErrors();
+            updateCharacterCounter();
+        }
+
+        function clearErrors() {
+            nameError.classList.remove('visible');
+            contentError.classList.remove('visible');
+            promptNameInput.style.borderColor = '';
+            promptContentInput.style.borderColor = '';
+        }
+
+        function showError(field, message) {
+            if (field === 'name') {
+                nameError.textContent = message;
+                nameError.classList.add('visible');
+                promptNameInput.style.borderColor = '#d32f2f';
+            } else if (field === 'content') {
+                contentError.textContent = message;
+                contentError.classList.add('visible');
+                promptContentInput.style.borderColor = '#d32f2f';
+            }
+        }
+
+        function validateForm() {
+            clearErrors();
+            let isValid = true;
+            
+            const name = promptNameInput.value.trim();
+            const content = promptContentInput.value.trim();
+            
+            if (!name) {
+                showError('name', 'Please enter a prompt name');
+                isValid = false;
+            } else if (name.length < 3) {
+                showError('name', 'Prompt name must be at least 3 characters');
+                isValid = false;
+            } else if (name.length > 50) {
+                showError('name', 'Prompt name must be less than 50 characters');
+                isValid = false;
+            }
+            
+            if (!content) {
+                showError('content', 'Please enter prompt content');
+                isValid = false;
+            } else if (content.length < 10) {
+                showError('content', 'Prompt content must be at least 10 characters');
+                isValid = false;
+            }
+            
+            // Check for duplicate names (except when editing the same prompt)
+            if (name && isValid) {
+                const existingKey = Object.keys(PROMPTS).find(key => 
+                    PROMPTS[key].name.toLowerCase() === name.toLowerCase() && 
+                    key !== currentEditingKey
+                );
+                if (existingKey) {
+                    showError('name', 'A prompt with this name already exists');
+                    isValid = false;
+                }
+            }
+            
+            return isValid;
+        }
+
+        function updateCharacterCounter() {
+            const count = promptContentInput.value.length;
+            characterCounter.textContent = `${count} characters`;
+            
+            if (count > 2000) {
+                characterCounter.style.color = '#f57c00';
+            } else if (count > 1500) {
+                characterCounter.style.color = '#ff9800';
+            } else {
+                characterCounter.style.color = '#999';
+            }
+            
+            // Auto-resize textarea
+            autoResizeTextarea();
+        }
+
+        
+        function autoResizeTextarea() {
+            // Save current scroll position
+            const currentScroll = promptContentInput.scrollTop;
+            
+            // Reset height to get accurate scrollHeight
+            promptContentInput.style.height = 'auto';
+            promptContentInput.style.overflowY = 'hidden';
+            
+            // Calculate heights
+            const scrollHeight = promptContentInput.scrollHeight;
+            const maxHeight = window.innerHeight * 0.4; // Max 40% of viewport height
+            const minHeight = 300; // Minimum height
+            
+            if (scrollHeight > maxHeight) {
+                // Content exceeds max height - make textarea scrollable
+                promptContentInput.style.height = maxHeight + 'px';
+                promptContentInput.style.overflowY = 'auto';
+                // Restore scroll position
+                promptContentInput.scrollTop = currentScroll;
+            } else {
+                // Content fits - expand textarea to fit content
+                const newHeight = Math.max(scrollHeight, minHeight);
+                promptContentInput.style.height = newHeight + 'px';
+                promptContentInput.style.overflowY = 'hidden';
+            }
+        }
+        
+        function handleModalSubmit(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) return;
+            
+            const name = promptNameInput.value.trim();
+            const content = promptContentInput.value.trim();
+            
+            if (isNewPrompt) {
+                const newKey = addCustomPrompt({ name, prompt: content });
+                showApiStatus(`✅ Added new prompt "${name}"`, 'success');
+            } else {
+                updatePrompt(currentEditingKey, { name, prompt: content });
+                showApiStatus(`✅ Updated prompt "${name}"`, 'success');
+            }
+            
+            renderPromptList();
+            updateProcessingOrder();
+            setupIndividualPrompts();
+            closeModal();
+        }
 
         // Model Management
         function loadSelectedModel() {
@@ -1056,8 +1702,283 @@ Transcript follows:`
             `;
         }
 
-        // API Key Management
+        // Storage Keys
         const STORAGE_KEY = 'gemini_api_keys';
+        const PROMPTS_STORAGE_KEY = 'gemini_custom_prompts';
+
+        // Prompt Management Functions
+        function loadCustomPrompts() {
+            const saved = localStorage.getItem(PROMPTS_STORAGE_KEY);
+            return saved ? JSON.parse(saved) : {};
+        }
+
+        function saveCustomPrompts() {
+            localStorage.setItem(PROMPTS_STORAGE_KEY, JSON.stringify(PROMPTS));
+        }
+
+        function initializePrompts() {
+            const customPrompts = loadCustomPrompts();
+            
+            // Start with defaults
+            PROMPTS = JSON.parse(JSON.stringify(DEFAULT_PROMPTS));
+            
+            // Merge with custom prompts
+            Object.keys(customPrompts).forEach(key => {
+                if (customPrompts[key]) {
+                    PROMPTS[key] = { ...PROMPTS[key], ...customPrompts[key] };
+                }
+            });
+            
+            // Add any custom prompts that don't exist in defaults
+            Object.keys(customPrompts).forEach(key => {
+                if (!PROMPTS[key] && customPrompts[key]) {
+                    PROMPTS[key] = customPrompts[key];
+                }
+            });
+        }
+
+        function getEnabledPrompts() {
+            const enabled = {};
+            Object.keys(PROMPTS).forEach(key => {
+                if (PROMPTS[key].enabled) {
+                    enabled[key] = PROMPTS[key];
+                }
+            });
+            return enabled;
+        }
+
+        function getOrderedPrompts() {
+            return Object.entries(PROMPTS)
+                .sort(([,a], [,b]) => (a.order || 999) - (b.order || 999))
+                .reduce((obj, [key, value]) => {
+                    obj[key] = value;
+                    return obj;
+                }, {});
+        }
+
+        function togglePrompt(key, enabled) {
+            if (PROMPTS[key]) {
+                PROMPTS[key].enabled = enabled;
+                saveCustomPrompts();
+                updateProcessingOrder();
+            }
+        }
+
+        function deletePrompt(key) {
+            if (PROMPTS[key] && !PROMPTS[key].isDefault) {
+                delete PROMPTS[key];
+                saveCustomPrompts();
+                updateProcessingOrder();
+                return true;
+            }
+            return false;
+        }
+
+        function resetPromptToDefault(key) {
+            if (DEFAULT_PROMPTS[key]) {
+                PROMPTS[key] = JSON.parse(JSON.stringify(DEFAULT_PROMPTS[key]));
+                saveCustomPrompts();
+                return true;
+            }
+            return false;
+        }
+
+        function resetAllPromptsToDefault() {
+            PROMPTS = JSON.parse(JSON.stringify(DEFAULT_PROMPTS));
+            saveCustomPrompts();
+            updateProcessingOrder();
+        }
+
+        function addCustomPrompt(promptData) {
+            const key = generatePromptKey(promptData.name);
+            PROMPTS[key] = {
+                name: promptData.name,
+                prompt: promptData.prompt,
+                enabled: true,
+                isDefault: false,
+                order: getNextOrder()
+            };
+            saveCustomPrompts();
+            updateProcessingOrder();
+            return key;
+        }
+
+        function updatePrompt(key, promptData) {
+            if (PROMPTS[key]) {
+                PROMPTS[key].name = promptData.name;
+                PROMPTS[key].prompt = promptData.prompt;
+                saveCustomPrompts();
+                return true;
+            }
+            return false;
+        }
+
+        function generatePromptKey(name) {
+            const base = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            let key = base;
+            let counter = 1;
+            
+            while (PROMPTS[key]) {
+                key = `${base}_${counter}`;
+                counter++;
+            }
+            
+            return key;
+        }
+
+        function getNextOrder() {
+            const maxOrder = Math.max(...Object.values(PROMPTS).map(p => p.order || 0));
+            return maxOrder + 1;
+        }
+
+        function renderPromptList() {
+            const orderedPrompts = getOrderedPrompts();
+            promptList.innerHTML = '';
+            
+            Object.entries(orderedPrompts).forEach(([key, prompt]) => {
+                const promptItem = document.createElement('div');
+                promptItem.className = `prompt-item ${!prompt.enabled ? 'disabled' : ''}`;
+                
+                const toggle = document.createElement('div');
+                toggle.className = 'prompt-toggle';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = prompt.enabled;
+                checkbox.addEventListener('change', (e) => {
+                    togglePrompt(key, e.target.checked);
+                    renderPromptList();
+                    updateProcessingOrder();
+                });
+                toggle.appendChild(checkbox);
+                
+                const details = document.createElement('div');
+                details.className = 'prompt-details';
+                
+                const name = document.createElement('div');
+                name.className = 'prompt-name';
+                name.textContent = prompt.name;
+                
+                const meta = document.createElement('div');
+                meta.className = 'prompt-meta';
+                
+                const badge = document.createElement('span');
+                badge.className = `prompt-badge ${prompt.isDefault ? '' : 'custom'}`;
+                badge.textContent = prompt.isDefault ? 'DEFAULT' : 'CUSTOM';
+                
+                const order = document.createElement('span');
+                order.textContent = `Order: ${prompt.order || 999}`;
+                
+                meta.appendChild(badge);
+                meta.appendChild(order);
+                details.appendChild(name);
+                details.appendChild(meta);
+                
+                const controls = document.createElement('div');
+                controls.className = 'prompt-controls';
+                
+                // Edit button
+                const editBtn = document.createElement('button');
+                editBtn.className = 'prompt-control-btn edit-btn';
+                editBtn.textContent = '✏️';
+                editBtn.title = 'Edit';
+                editBtn.addEventListener('click', () => openPromptEditor(key));
+                
+                // Duplicate button
+                const duplicateBtn = document.createElement('button');
+                duplicateBtn.className = 'prompt-control-btn duplicate-btn';
+                duplicateBtn.textContent = '📋';
+                duplicateBtn.title = 'Duplicate';
+                duplicateBtn.addEventListener('click', () => duplicatePrompt(key));
+                
+                // Reset button (only for default prompts)
+                if (prompt.isDefault) {
+                    const resetBtn = document.createElement('button');
+                    resetBtn.className = 'prompt-control-btn reset-btn';
+                    resetBtn.textContent = '🔄';
+                    resetBtn.title = 'Reset to Default';
+                    resetBtn.addEventListener('click', () => {
+                        if (confirm(`Reset "${prompt.name}" to default?`)) {
+                            resetPromptToDefault(key);
+                            renderPromptList();
+                            updateProcessingOrder();
+                            showApiStatus(`✅ Reset "${prompt.name}" to default`, 'success');
+                        }
+                    });
+                    controls.appendChild(resetBtn);
+                }
+                
+                // Delete button (only for custom prompts)
+                if (!prompt.isDefault) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'prompt-control-btn delete-btn';
+                    deleteBtn.textContent = '🗑️';
+                    deleteBtn.title = 'Delete';
+                    deleteBtn.addEventListener('click', () => {
+                        if (confirm(`Delete "${prompt.name}"? This cannot be undone.`)) {
+                            if (deletePrompt(key)) {
+                                renderPromptList();
+                                updateProcessingOrder();
+                                showApiStatus(`✅ Deleted "${prompt.name}"`, 'success');
+                            }
+                        }
+                    });
+                    controls.appendChild(deleteBtn);
+                }
+                
+                controls.appendChild(editBtn);
+                controls.appendChild(duplicateBtn);
+                
+                promptItem.appendChild(toggle);
+                promptItem.appendChild(details);
+                promptItem.appendChild(controls);
+                promptList.appendChild(promptItem);
+            });
+        }
+
+        function updateProcessingOrder() {
+            const enabledPrompts = getEnabledPrompts();
+            const orderedPrompts = Object.entries(enabledPrompts)
+                .sort(([,a], [,b]) => (a.order || 999) - (b.order || 999));
+            
+            processingOrder.innerHTML = '';
+            orderedPrompts.forEach(([key, prompt], index) => {
+                const li = document.createElement('li');
+                li.textContent = `${index + 1}. ${prompt.name}`;
+                processingOrder.appendChild(li);
+            });
+            
+            if (orderedPrompts.length === 0) {
+                const li = document.createElement('li');
+                li.textContent = 'No prompts enabled';
+                li.style.fontStyle = 'italic';
+                li.style.color = '#999';
+                processingOrder.appendChild(li);
+            }
+        }
+
+        function duplicatePrompt(sourceKey) {
+            const sourcePrompt = PROMPTS[sourceKey];
+            if (!sourcePrompt) return;
+            
+            const newName = `${sourcePrompt.name} (Copy)`;
+            const key = addCustomPrompt({
+                name: newName,
+                prompt: sourcePrompt.prompt
+            });
+            
+            renderPromptList();
+            showApiStatus(`✅ Duplicated "${sourcePrompt.name}"`, 'success');
+            
+            // Open editor for the new prompt
+            setTimeout(() => openPromptEditor(key), 100);
+        }
+
+        // Updated prompt editor using the modal
+        function openPromptEditor(key = null) {
+            openModal(key);
+        }
+
+        // API Key Management
 
         function loadSavedApiKeys() {
             const saved = localStorage.getItem(STORAGE_KEY);
@@ -1226,13 +2147,15 @@ Transcript follows:`
         function exportApiKeys() {
             const apiKeys = loadSavedApiKeys();
             const rotationSettings = loadRotationSettings();
+            const customPrompts = loadCustomPrompts();
             
             const exportData = {
-                version: "1.0",
+                version: "1.1",
                 exportDate: new Date().toISOString(),
                 apiKeys: apiKeys,
                 rotationSettings: rotationSettings,
-                selectedModel: state.selectedModel
+                selectedModel: state.selectedModel,
+                customPrompts: customPrompts
             };
             
             const dataStr = JSON.stringify(exportData, null, 2);
@@ -1315,11 +2238,31 @@ Transcript follows:`
                             updateModelInfo();
                         }
                         
+                        // Import custom prompts if available
+                        if (importData.customPrompts && 
+                            typeof importData.customPrompts === 'object') {
+                            
+                            // Save the custom prompts and reinitialize
+                            localStorage.setItem(PROMPTS_STORAGE_KEY, JSON.stringify(importData.customPrompts));
+                            initializePrompts();
+                            
+                            // Refresh prompt-related UI
+                            renderPromptList();
+                            updateProcessingOrder();
+                            setupIndividualPrompts();
+                        }
+                        
                         // Refresh UI
                         populateApiKeySelector();
                         updateUI();
                         
-                        showApiStatus(`✅ Successfully imported configuration with ${keyCount} API keys!`, 'success');
+                        const promptCount = importData.customPrompts ? 
+                            Object.keys(importData.customPrompts).length : 0;
+                        const message = promptCount > 0 ? 
+                            `✅ Successfully imported ${keyCount} API keys and ${promptCount} custom prompts!` :
+                            `✅ Successfully imported configuration with ${keyCount} API keys!`;
+                        
+                        showApiStatus(message, 'success');
                     }
                     
                 } catch (error) {
@@ -1337,6 +2280,9 @@ Transcript follows:`
 
         // Initialize the application
         function init() {
+            // Initialize prompts first
+            initializePrompts();
+            
             // Load saved settings
             state.selectedModel = loadSelectedModel();
             modelSelector.value = state.selectedModel;
@@ -1348,6 +2294,8 @@ Transcript follows:`
             autoRotateToggle.checked = state.autoRotate;
             
             setupEventListeners();
+            renderPromptList();
+            updateProcessingOrder();
             setupIndividualPrompts();
             populateApiKeySelector();
             updateUI();
@@ -1355,6 +2303,42 @@ Transcript follows:`
 
         function setupEventListeners() {
             modelSelector.addEventListener('change', handleModelSelection);
+            addPromptButton.addEventListener('click', () => openPromptEditor());
+            resetAllPromptsButton.addEventListener('click', () => {
+                if (confirm('Reset all prompts to defaults? This will remove all custom prompts and reset all modifications.')) {
+                    resetAllPromptsToDefault();
+                    renderPromptList();
+                    updateProcessingOrder();
+                    setupIndividualPrompts();
+                    showApiStatus('✅ All prompts reset to defaults', 'success');
+                }
+            });
+            
+            // Modal event listeners
+            modalClose.addEventListener('click', closeModal);
+            cancelButton.addEventListener('click', closeModal);
+            promptEditorForm.addEventListener('submit', handleModalSubmit);
+            promptContentInput.addEventListener('input', updateCharacterCounter);
+            
+            // Close modal on backdrop click
+            promptEditorModal.addEventListener('click', (e) => {
+                if (e.target === promptEditorModal) {
+                    closeModal();
+                }
+            });
+            
+            // Keyboard shortcuts for modal
+            document.addEventListener('keydown', (e) => {
+                if (promptEditorModal.classList.contains('active')) {
+                    if (e.key === 'Escape') {
+                        closeModal();
+                    } else if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+                        e.preventDefault();
+                        handleModalSubmit(new Event('submit'));
+                    }
+                }
+            });
+            
             apiKeyInput.addEventListener('input', handleApiKeyChange);
             apiKeySelector.addEventListener('change', handleApiKeySelection);
             apiKeyLabel.addEventListener('input', updateUI);
@@ -1433,7 +2417,24 @@ Transcript follows:`
         function setupIndividualPrompts() {
             individualPrompts.innerHTML = '';
             
-            Object.entries(PROMPTS).forEach(([key, data]) => {
+            // Get enabled prompts in order
+            const enabledPrompts = getEnabledPrompts();
+            const orderedPrompts = Object.entries(enabledPrompts)
+                .sort(([,a], [,b]) => (a.order || 999) - (b.order || 999));
+            
+            if (orderedPrompts.length === 0) {
+                const noPrompts = document.createElement('div');
+                noPrompts.className = 'prompt-item';
+                noPrompts.innerHTML = `
+                    <div style="text-align: center; color: #999; font-style: italic; width: 100%;">
+                        No prompts enabled
+                    </div>
+                `;
+                individualPrompts.appendChild(noPrompts);
+                return;
+            }
+            
+            orderedPrompts.forEach(([key, data]) => {
                 const promptItem = document.createElement('div');
                 promptItem.className = 'prompt-item';
                 
@@ -1507,35 +2508,42 @@ Transcript follows:`
             const transcript = transcriptInput.value.trim();
             if (!transcript || (!state.apiKey && !(state.autoRotate && state.availableKeys.length > 0))) return;
 
+            // Get only enabled prompts in order
+            const enabledPrompts = getEnabledPrompts();
+            const orderedPrompts = Object.entries(enabledPrompts)
+                .sort(([,a], [,b]) => (a.order || 999) - (b.order || 999));
+            
+            if (orderedPrompts.length === 0) {
+                showApiStatus('❌ No prompts enabled for processing', 'error');
+                return;
+            }
+
             state.processing = true;
             updateUI();
             
             progressSection.style.display = 'block';
             progressFill.style.width = '0%';
             
-            const promptKeys = Object.keys(PROMPTS);
-            
             try {
-                for (let i = 0; i < promptKeys.length; i++) {
-                    const key = promptKeys[i];
-                    const data = PROMPTS[key];
+                for (let i = 0; i < orderedPrompts.length; i++) {
+                    const [key, data] = orderedPrompts[i];
                     
                     if (!state.autoRotate) {
                         statusText.textContent = `Processing: ${data.name}...`;
                     }
-                    progressFill.style.width = `${((i + 1) / promptKeys.length) * 100}%`;
+                    progressFill.style.width = `${((i + 1) / orderedPrompts.length) * 100}%`;
                     
                     const fullPrompt = `${data.prompt}\n\n---\n\n${transcript}`;
                     const response = await callGeminiAPI(fullPrompt, data.name);
                     state.responses[key] = response;
                     
                     // Small delay between requests
-                    if (i < promptKeys.length - 1) {
+                    if (i < orderedPrompts.length - 1) {
                         await new Promise(resolve => setTimeout(resolve, 1000));
                     }
                 }
                 
-                statusText.textContent = '✅ All prompts processed successfully!';
+                statusText.textContent = '✅ All enabled prompts processed successfully!';
                 renderResults();
                 
             } catch (error) {
@@ -1601,40 +2609,46 @@ Transcript follows:`
             // Add download button event listener
             downloadButton.addEventListener('click', downloadConsolidatedReport);
 
-            // Create tabs with proper event listeners
+            // Create tabs with proper event listeners - only for prompts that have responses
             let firstTabButton = null;
-            Object.entries(PROMPTS).forEach(([key, data]) => {
-                // Create tab button
-                const tabButton = document.createElement('button');
-                tabButton.className = 'tab';
-                tabButton.textContent = data.name;
-                tabButton.addEventListener('click', () => showTab(key, tabButton));
-                tabsContainer.appendChild(tabButton);
+            const enabledPrompts = getEnabledPrompts();
+            const orderedPrompts = Object.entries(enabledPrompts)
+                .sort(([,a], [,b]) => (a.order || 999) - (b.order || 999));
                 
-                if (!firstTabButton) firstTabButton = tabButton;
+            orderedPrompts.forEach(([key, data]) => {
+                if (state.responses[key]) {
+                    // Create tab button
+                    const tabButton = document.createElement('button');
+                    tabButton.className = 'tab';
+                    tabButton.textContent = data.name;
+                    tabButton.addEventListener('click', () => showTab(key, tabButton));
+                    tabsContainer.appendChild(tabButton);
+                    
+                    if (!firstTabButton) firstTabButton = tabButton;
 
-                // Create tab content
-                const response = state.responses[key] || 'No response yet';
-                const tabContent = document.createElement('div');
-                tabContent.id = `tab-${key}`;
-                tabContent.className = 'tab-content';
-                
-                const responseContainer = document.createElement('div');
-                responseContainer.className = 'response-container';
-                
-                const responseText = document.createElement('div');
-                responseText.className = 'response-text';
-                responseText.textContent = response;
-                
-                const copyButton = document.createElement('button');
-                copyButton.className = 'copy-button';
-                copyButton.textContent = `📋 Copy ${data.name}`;
-                copyButton.addEventListener('click', () => copyToClipboard(key, copyButton));
-                
-                responseContainer.appendChild(responseText);
-                tabContent.appendChild(responseContainer);
-                tabContent.appendChild(copyButton);
-                tabContentsContainer.appendChild(tabContent);
+                    // Create tab content
+                    const response = state.responses[key];
+                    const tabContent = document.createElement('div');
+                    tabContent.id = `tab-${key}`;
+                    tabContent.className = 'tab-content';
+                    
+                    const responseContainer = document.createElement('div');
+                    responseContainer.className = 'response-container';
+                    
+                    const responseText = document.createElement('div');
+                    responseText.className = 'response-text';
+                    responseText.textContent = response;
+                    
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'copy-button';
+                    copyButton.textContent = `📋 Copy ${data.name}`;
+                    copyButton.addEventListener('click', () => copyToClipboard(key, copyButton));
+                    
+                    responseContainer.appendChild(responseText);
+                    tabContent.appendChild(responseContainer);
+                    tabContent.appendChild(copyButton);
+                    tabContentsContainer.appendChild(tabContent);
+                }
             });
 
             // Show first tab with content
@@ -1726,9 +2740,15 @@ Transcript follows:`
                 "new_learning": "# New Learning"
             };
             
-            Object.entries(PROMPTS).forEach(([key, data]) => {
+            // Get responses in order based on enabled prompts
+            const enabledPrompts = getEnabledPrompts();
+            const orderedPrompts = Object.entries(enabledPrompts)
+                .sort(([,a], [,b]) => (a.order || 999) - (b.order || 999));
+            
+            orderedPrompts.forEach(([key, data]) => {
                 if (key in state.responses) {
-                    output += `${sectionTitles[key] || `# ${data.name}`}\n\n`;
+                    const title = sectionTitles[key] || `# ${data.name}`;
+                    output += `${title}\n\n`;
                     output += state.responses[key];
                     output += '\n\n---\n\n';
                 }
