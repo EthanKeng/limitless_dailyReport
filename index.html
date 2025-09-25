@@ -1359,7 +1359,8 @@
             autoRotate: false,
             currentRotationIndex: 0,
             availableKeys: [],
-            selectedModel: 'gemini-2.5-pro'
+            selectedModel: 'gemini-2.5-pro',
+            lastTranscript: ''
         };
 
         // Default prompts configuration with metadata
@@ -2673,44 +2674,68 @@ Transcript follows:`,
             const transcript = transcriptInput.value.trim();
             if (!transcript || (!state.apiKey && !(state.autoRotate && state.availableKeys.length > 0))) return;
 
+            const isSameTranscript = state.lastTranscript === transcript;
+            if (!isSameTranscript) {
+                state.responses = {};
+                renderResults();
+            }
+            state.lastTranscript = transcript;
+
             // Get only enabled prompts in order
             const enabledPrompts = getEnabledPrompts();
             const orderedPrompts = Object.entries(enabledPrompts)
                 .sort(([,a], [,b]) => (a.order || 999) - (b.order || 999));
-            
+
             if (orderedPrompts.length === 0) {
                 showApiStatus('❌ No prompts enabled for processing', 'error');
                 return;
             }
 
+            const totalPrompts = orderedPrompts.length;
+            let completedCount = orderedPrompts.filter(([key]) => state.responses[key]).length;
+
+            if (completedCount === totalPrompts) {
+                progressSection.style.display = 'block';
+                progressFill.style.width = '100%';
+                statusText.textContent = '✅ All enabled prompts already processed.';
+                renderResults();
+                return;
+            }
+
             state.processing = true;
             updateUI();
-            
+
             progressSection.style.display = 'block';
-            progressFill.style.width = '0%';
-            
+            progressFill.style.width = `${(completedCount / totalPrompts) * 100}%`;
+
             try {
                 for (let i = 0; i < orderedPrompts.length; i++) {
                     const [key, data] = orderedPrompts[i];
-                    
+
+                    if (state.responses[key]) {
+                        continue;
+                    }
+
                     if (!state.autoRotate) {
                         statusText.textContent = `Processing: ${data.name}...`;
                     }
-                    progressFill.style.width = `${((i + 1) / orderedPrompts.length) * 100}%`;
-                    
+
                     const fullPrompt = `${data.prompt}\n\n---\n\n${transcript}`;
                     const response = await callGeminiAPI(fullPrompt, data.name);
                     state.responses[key] = response;
-                    
+                    completedCount++;
+
+                    renderResults();
+                    progressFill.style.width = `${(completedCount / totalPrompts) * 100}%`;
+
                     // Small delay between requests
-                    if (i < orderedPrompts.length - 1) {
+                    if (completedCount < totalPrompts) {
                         await new Promise(resolve => setTimeout(resolve, 1000));
                     }
                 }
-                
+
                 statusText.textContent = '✅ All enabled prompts processed successfully!';
-                renderResults();
-                
+
             } catch (error) {
                 statusText.textContent = `❌ Error: ${error.message}`;
                 console.error('Processing error:', error);
