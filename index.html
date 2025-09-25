@@ -2917,33 +2917,47 @@ Transcript follows:`,
 
         function downloadConsolidatedReport() {
             const date = new Date().toISOString().split('T')[0];
-            let output = `# AI Analysis Results - ${date}\n\n`;
-            
+
             // Map prompt keys to custom section titles
             const sectionTitles = {
                 "highlights_reflection": "# High/Low Light and Reflection",
                 "todo_list": "# TodoList",
                 "daily_chart": "# DailyChart",
-                "suggestion": "# Suggestion", 
+                "suggestion": "# Suggestion",
                 "summary": "# Summary",
                 "daily_logs": "# Daily Logs",
                 "new_learning": "# New Learning"
             };
-            
+
             // Get responses in order based on enabled prompts
             const enabledPrompts = getEnabledPrompts();
             const orderedPrompts = Object.entries(enabledPrompts)
                 .sort(([,a], [,b]) => (a.order || 999) - (b.order || 999));
-            
+
+            const sections = [];
+            const missingSections = [];
+
             orderedPrompts.forEach(([key, data]) => {
+                const title = sectionTitles[key] || `# ${data.name}`;
+
                 if (key in state.responses) {
-                    const title = sectionTitles[key] || `# ${data.name}`;
-                    output += `${title}\n\n`;
-                    output += state.responses[key];
-                    output += '\n\n---\n\n';
+                    sections.push(`${title}\n\n${state.responses[key]}\n\n---\n\n`);
+                } else {
+                    missingSections.push(data.name);
+                    sections.push(`${title}\n\n> ⚠️ Result not available yet. Re-run this prompt to generate content.\n\n---\n\n`);
                 }
             });
-            
+
+            let output = `# AI Analysis Results - ${date}\n\n`;
+
+            if (missingSections.length > 0) {
+                const pendingList = missingSections.join(', ');
+                output += `> ⚠️ The following sections are incomplete: ${pendingList}.\n`;
+                output += `> Resume processing to fill them in, or export again once they finish.\n\n---\n\n`;
+            }
+
+            output += sections.join('');
+
             const blob = new Blob([output], { type: 'text/markdown' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
