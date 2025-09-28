@@ -449,6 +449,22 @@
             background-color: #45a049;
         }
 
+        .toggle-all-btn {
+            background-color: #2196F3;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            flex: 1;
+        }
+
+        .toggle-all-btn:hover {
+            background-color: #1976D2;
+        }
+
         .reset-all-btn {
             background-color: #ff9800;
             color: white;
@@ -1185,6 +1201,9 @@
                         <button id="addPromptButton" class="add-prompt-btn">
                             ➕ Add Prompt
                         </button>
+                        <button id="toggleAllPromptsButton" class="toggle-all-btn">
+                            ✅ Select All
+                        </button>
                         <button id="resetAllPromptsButton" class="reset-all-btn">
                             🔄 Reset All
                         </button>
@@ -1538,6 +1557,7 @@ Transcript follows:`,
         const modelInfo = document.getElementById('modelInfo');
         const promptList = document.getElementById('promptList');
         const addPromptButton = document.getElementById('addPromptButton');
+        const toggleAllPromptsButton = document.getElementById('toggleAllPromptsButton');
         const resetAllPromptsButton = document.getElementById('resetAllPromptsButton');
         const exportPromptsButton = document.getElementById('exportPromptsButton');
         const importPromptsButton = document.getElementById('importPromptsButton');
@@ -1817,6 +1837,34 @@ Transcript follows:`,
             }
         }
 
+        function areAllPromptsEnabled() {
+            const promptValues = Object.values(PROMPTS);
+            return promptValues.length > 0 && promptValues.every(prompt => prompt.enabled);
+        }
+
+        function setAllPromptsEnabled(enabled) {
+            Object.keys(PROMPTS).forEach(key => {
+                PROMPTS[key].enabled = enabled;
+            });
+            saveCustomPrompts();
+            updateProcessingOrder();
+        }
+
+        function updateToggleAllButtonState() {
+            if (!toggleAllPromptsButton) return;
+            const totalPrompts = Object.keys(PROMPTS).length;
+            const allEnabled = areAllPromptsEnabled();
+            toggleAllPromptsButton.disabled = totalPrompts === 0;
+            if (totalPrompts === 0) {
+                toggleAllPromptsButton.textContent = '✅ Select All';
+                toggleAllPromptsButton.title = 'Enable all prompts';
+                return;
+            }
+
+            toggleAllPromptsButton.textContent = allEnabled ? '🚫 Deselect All' : '✅ Select All';
+            toggleAllPromptsButton.title = allEnabled ? 'Disable all prompts' : 'Enable all prompts';
+        }
+
         function deletePrompt(key) {
             if (PROMPTS[key] && !PROMPTS[key].isDefault) {
                 delete PROMPTS[key];
@@ -2088,6 +2136,8 @@ Transcript follows:`,
                 promptItem.appendChild(controls);
                 promptList.appendChild(promptItem);
             });
+
+            updateToggleAllButtonState();
         }
 
         function updateProcessingOrder() {
@@ -2510,6 +2560,16 @@ Transcript follows:`,
         function setupEventListeners() {
             modelSelector.addEventListener('change', handleModelSelection);
             addPromptButton.addEventListener('click', () => openPromptEditor());
+            if (toggleAllPromptsButton) {
+                toggleAllPromptsButton.addEventListener('click', () => {
+                    const allEnabled = areAllPromptsEnabled();
+                    setAllPromptsEnabled(!allEnabled);
+                    renderPromptList();
+                    setupIndividualPrompts();
+                    updateUI();
+                    showApiStatus(allEnabled ? '🚫 Disabled all prompts' : '✅ Enabled all prompts', 'success');
+                });
+            }
             resetAllPromptsButton.addEventListener('click', () => {
                 if (confirm('Reset all prompts to defaults? This will remove all custom prompts and reset all modifications.')) {
                     resetAllPromptsToDefault();
