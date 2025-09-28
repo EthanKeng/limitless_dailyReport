@@ -1323,6 +1323,8 @@
         const GEMINI_API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models/';
         const ROTATION_STORAGE_KEY = 'gemini_auto_rotate_settings';
         const MODEL_STORAGE_KEY = 'gemini_selected_model';
+        const RESPONSES_STORAGE_KEY = 'gemini_prompt_response_cache';
+        const RESPONSE_CACHE_LIMIT = 5;
         
         // Model configurations
         const MODELS = {
@@ -2166,25 +2168,35 @@ Transcript follows:`,
             }
         }
 
-        function getNextApiKey() {
-            if (!state.autoRotate || state.availableKeys.length === 0) {
-                return state.apiKey;
+        function getNextApiKeyInfo() {
+            if (state.autoRotate && state.availableKeys.length > 0) {
+                if (state.availableKeys.length === 1) {
+                    const singleKey = state.availableKeys[0];
+                    updateCurrentApiIndicator(singleKey.label);
+                    return { key: singleKey.key, label: singleKey.label };
+                }
+
+                const currentKey = state.availableKeys[state.currentRotationIndex];
+
+                // Rotate to next key for the next request
+                state.currentRotationIndex = (state.currentRotationIndex + 1) % state.availableKeys.length;
+                saveRotationSettings();
+
+                // Update UI to show current key
+                updateCurrentApiIndicator(currentKey.label);
+
+                return { key: currentKey.key, label: currentKey.label };
             }
-            
-            if (state.availableKeys.length === 1) {
-                return state.availableKeys[0].key;
+
+            if (state.apiKey) {
+                const savedKey = state.availableKeys.find(k => k.key === state.apiKey);
+                return {
+                    key: state.apiKey,
+                    label: savedKey ? savedKey.label : 'Manual Entry'
+                };
             }
-            
-            const currentKey = state.availableKeys[state.currentRotationIndex];
-            
-            // Rotate to next key for the next request
-            state.currentRotationIndex = (state.currentRotationIndex + 1) % state.availableKeys.length;
-            saveRotationSettings();
-            
-            // Update UI to show current key
-            updateCurrentApiIndicator(currentKey.label);
-            
-            return currentKey.key;
+
+            return { key: '', label: '' };
         }
 
         function updateCurrentApiIndicator(label) {
@@ -2198,6 +2210,45 @@ Transcript follows:`,
 
         function saveApiKeys(apiKeys) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(apiKeys));
+        }
+
+        function loadResponseCache() {
+            try {
+                const saved = localStorage.getItem(RESPONSES_STORAGE_KEY);
+                return saved ? JSON.parse(saved) : {};
+            } catch (error) {
+                console.warn('Failed to parse response cache, resetting.', error);
+                localStorage.removeItem(RESPONSES_STORAGE_KEY);
+                return {};
+            }
+        }
+
+        function saveResponseCache(cache) {
+            localStorage.setItem(RESPONSES_STORAGE_KEY, JSON.stringify(cache));
+        }
+
+        function cachePromptResponse(promptKey, promptData, fullPrompt, responseText, apiKeyLabel) {
+            const cache = loadResponseCache();
+            if (!cache[promptKey]) {
+                cache[promptKey] = [];
+            }
+
+            const entry = {
+                promptKey,
+                promptName: promptData?.name || promptKey,
+                timestamp: new Date().toISOString(),
+                model: MODELS[state.selectedModel]?.name || state.selectedModel,
+                apiKeyLabel: apiKeyLabel || 'Manual Entry',
+                promptPreview: fullPrompt.substring(0, 300),
+                response: responseText
+            };
+
+            cache[promptKey].unshift(entry);
+            if (cache[promptKey].length > RESPONSE_CACHE_LIMIT) {
+                cache[promptKey] = cache[promptKey].slice(0, RESPONSE_CACHE_LIMIT);
+            }
+
+            saveResponseCache(cache);
         }
 
         function populateApiKeySelector() {
@@ -2621,8 +2672,8 @@ Transcript follows:`,
 
         async function callGeminiAPI(prompt, promptName = '') {
             // Get the appropriate API key (either current or rotated)
-            const apiKeyToUse = getNextApiKey();
-            
+            const { key: apiKeyToUse, label: apiKeyLabel } = getNextApiKeyInfo();
+
             if (!apiKeyToUse) {
                 throw new Error('API key is required');
             }
@@ -2662,12 +2713,15 @@ Transcript follows:`,
             if (!response.ok) {
                 const errorData = await response.json();
                 const currentKeyInfo = state.availableKeys.find(k => k.key === apiKeyToUse);
-                const keyLabel = currentKeyInfo ? currentKeyInfo.label : 'Unknown';
+                const keyLabel = apiKeyLabel || (currentKeyInfo ? currentKeyInfo.label : 'Unknown');
                 throw new Error(`${errorData.error?.message || 'API call failed'} (${MODELS[state.selectedModel].name}, key: ${keyLabel})`);
             }
 
             const data = await response.json();
-            return data.candidates[0].content.parts[0].text;
+            return {
+                text: data.candidates[0].content.parts[0].text,
+                apiKeyLabel
+            };
         }
 
         async function processAllPrompts() {
@@ -2721,8 +2775,9 @@ Transcript follows:`,
                     }
 
                     const fullPrompt = `${data.prompt}\n\n---\n\n${transcript}`;
-                    const response = await callGeminiAPI(fullPrompt, data.name);
+                    const { text: response, apiKeyLabel } = await callGeminiAPI(fullPrompt, data.name);
                     state.responses[key] = response;
+                    cachePromptResponse(key, data, fullPrompt, response, apiKeyLabel);
                     completedCount++;
 
                     renderResults();
@@ -2758,8 +2813,9 @@ Transcript follows:`,
             
             try {
                 const fullPrompt = `${data.prompt}\n\n---\n\n${transcript}`;
-                const response = await callGeminiAPI(fullPrompt, data.name);
+                const { text: response, apiKeyLabel } = await callGeminiAPI(fullPrompt, data.name);
                 state.responses[key] = response;
+                cachePromptResponse(key, data, fullPrompt, response, apiKeyLabel);
                 renderResults();
             } catch (error) {
                 alert(`Error processing ${data.name}: ${error.message}`);
